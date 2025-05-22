@@ -5,6 +5,49 @@
 
 Particle particles[MAX_PARTICLES];
 
+Cell hashTable[HASH_TABLE_SIZE];
+
+void ClearHashTable()
+{
+    for(int i = 0; i < HASH_TABLE_SIZE; i++)
+    {
+        hashTable[i].count = 0;
+    }
+}
+
+int SpatialHash(Vector2 pos)
+{
+    int x = (int)floor(pos.x / CELL_SIZE);
+    int y = (int)floor(pos.y / CELL_SIZE);
+    int hash = ((x*P1) ^ (y*P2)) % HASH_TABLE_SIZE;
+    if(hash <0)
+    {
+        return hash + HASH_TABLE_SIZE;
+    }
+    else
+    {
+        return hash;
+    }
+}
+
+void InsertParticle(Particle *p)
+{
+    int hash = SpatialHash(p->pos);
+    if(hashTable[hash].count < MAX_PARTICLES_PER_CELL)
+    {
+        hashTable[hash].particles[hashTable[hash].count++] = p;
+    }
+}
+
+void BuildHashTable()
+{
+    ClearHashTable();
+    for (int i = 0; i < MAX_PARTICLES; i++)
+    {
+        InsertParticle(&particles[i]);
+    }
+}
+
 void InitParticles()
 {
     int i = 0;

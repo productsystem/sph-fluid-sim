@@ -47,16 +47,28 @@ void ComputeDensityPressure()
     for (int i = 0; i < MAX_PARTICLES; i++)
     {
         particles[i].rho = 0.f;
+        int cx = (int)(particles[i].pos.x / CELL_SIZE);
+        int cy = (int)(particles[i].pos.y / CELL_SIZE);
 
-        for (int j = 0; j < MAX_PARTICLES; j++)
+        for (int dx = -1; dx <= 1; dx++)
         {
-            float r2 = Vector2DistanceSqr(particles[i].pos, particles[j].pos);
-            if (r2 < H * H)
+            for(int dy = -1; dy <= 1; dy++)
             {
-                particles[i].rho += MASS * POLY6 * powf(H * H - r2, 3);
+                int hash = SpatialHash((Vector2){(cx + dx) * CELL_SIZE, (cy + dy) * CELL_SIZE});
+                Cell cell = hashTable[hash];
+
+                for(int k = 0; k <cell.count; k++)
+                {
+                    Particle *p = cell.particles[k];
+                    float r2 = Vector2DistanceSqr(particles[i].pos, p->pos);
+                    if (r2 < H * H)
+                    {
+                        particles[i].rho += MASS * POLY6 * pow(H * H - r2, 3);
+                    }
+                    
+                }
             }
         }
-
         particles[i].p = GAS_CONSTANT * (particles[i].rho - REST_DENSTIY);
     }
 }
@@ -71,22 +83,38 @@ void ComputeForces()
             continue;
         Vector2 fg = Vector2Scale(G, -MASS / particles[i].rho);
 
-        for (int j = 0; j < MAX_PARTICLES; j++)
+        int cx = (int)(particles[i].pos.x / CELL_SIZE);
+        int cy = (int)(particles[i].pos.y / CELL_SIZE);
+
+        for (int dx = -1; dx <= 1; dx++)
         {
-            if (i == j || particles[i].rho == 0.f || particles[j].rho == 0.f)
-                continue;
+            for(int dy = -1; dy <= 1; dy++)
+            {
+                int hash = SpatialHash((Vector2){(cx + dx) * CELL_SIZE, (cy + dy) * CELL_SIZE});
+                Cell cell = hashTable[hash];
 
-            float r = Vector2Distance(particles[i].pos, particles[j].pos);
-            if (r >= H)
-                continue;
+                for(int k = 0; k <cell.count; k++)
+                {
+                    Particle *p = cell.particles[k];
+                    if(&particles[i] == p || p->rho == 0.f)
+                    {
+                        continue;
+                    }
+                    float r = Vector2Distance(particles[i].pos, p->pos);
+                    if(r < H)
+                    {
+                        Vector2 rij = Vector2Subtract(p->pos, particles[i].pos);
+                        Vector2 dir = Vector2Normalize(rij);
 
-            Vector2 rij = Vector2Subtract(particles[j].pos, particles[i].pos);
-            Vector2 dir = Vector2Normalize(rij);
-            float pCalc = -MASS * (particles[i].p + particles[j].p) / (2.0f * particles[j].rho);
-            fp = Vector2Add(fp, Vector2Scale(dir, pCalc * SPIKY_GRAD * powf(H - r, 3.f)));
-            Vector2 velDiff = Vector2Subtract(particles[j].vel, particles[i].vel);
-            float vCalc = VISCOSITY * MASS / particles[j].rho;
-            fv = Vector2Add(fv, Vector2Scale(velDiff, vCalc * (H - r) * VISC_LAP));
+                        float pCalc = -MASS * (particles[i].p + p->p) / (2.0f * p->rho);
+                        fp = Vector2Add(fp, Vector2Scale(dir, pCalc * SPIKY_GRAD * pow(H - r, 3.0f)));
+
+                        Vector2 velDiff =  Vector2Subtract(p->vel, particles[i].vel);
+                        float vCalc = VISCOSITY * MASS / p->rho;
+                        fv = Vector2Add(fv, Vector2Scale(velDiff, vCalc * VISC_LAP * (H - r)));
+                    }
+                }
+            }
         }
 
         particles[i].force = Vector2Add(fp, Vector2Add(fv, fg));
@@ -145,6 +173,7 @@ void HandleMouseInteraction()
 
 void Update()
 {
+    BuildHashTable();
     ComputeDensityPressure();
     ComputeForces();
     HandleMouseInteraction();
