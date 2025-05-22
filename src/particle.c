@@ -41,6 +41,6 @@ void DrawParticles()
 {
     for(int i = 0; i < MAX_PARTICLES; i++)
     {
-        DrawCircleV(particles[i].pos, 2, BLUE);
+        DrawCircleV(particles[i].pos, 5, BLUE);
     }
 }

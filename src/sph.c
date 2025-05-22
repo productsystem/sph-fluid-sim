@@ -98,9 +98,10 @@ void HandleMouseInteraction()
     Vector2 mousePos = GetMousePosition();
     Vector2 mouseDelta = Vector2Subtract(mousePos, prevMousePos);
     float radius = 30.0f;
-    float moveScale = 0.5f;
-    float throwScale = 100.0f;
-    //TODO: Do it force wise instead of setting vel as 0?
+    float springStrength = 200.0f;
+    float dampingStrength = 0.8f;
+    float throwImpulseScale = 100.0f;
+
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
         pickedCount = 0;
@@ -109,34 +110,38 @@ void HandleMouseInteraction()
             if (Vector2Distance(particles[i].pos, mousePos) < radius && pickedCount < MAX_PICKED)
             {
                 pickedIndices[pickedCount++] = i;
-                particles[i].vel = (Vector2){0};
             }
         }
         dragging = true;
     }
+
     if (IsMouseButtonDown(MOUSE_LEFT_BUTTON) && dragging)
     {
         for (int i = 0; i < pickedCount; i++)
         {
             int index = pickedIndices[i];
-            particles[index].pos = Vector2Add(particles[index].pos, Vector2Scale(mouseDelta, moveScale));
-            particles[index].vel = (Vector2){0};
+            Vector2 toMouse = Vector2Subtract(mousePos, particles[index].pos);
+            Vector2 damping = Vector2Scale(particles[index].vel, -dampingStrength);
+            Vector2 springForce = Vector2Add(Vector2Scale(toMouse, springStrength), damping);
+            particles[index].force = Vector2Add(particles[index].force, springForce);
         }
     }
+
     if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON) && dragging)
     {
         for (int i = 0; i < pickedCount; i++)
         {
             int index = pickedIndices[i];
-            particles[index].vel = Vector2Scale(mouseDelta, throwScale);
+            Vector2 impulse = Vector2Scale(mouseDelta, throwImpulseScale);
+            particles[index].vel = Vector2Add(particles[index].vel, impulse);
         }
         pickedCount = 0;
         dragging = false;
     }
-    //laggy pickups?
 
     prevMousePos = mousePos;
 }
+
 
 void Update()
 {
