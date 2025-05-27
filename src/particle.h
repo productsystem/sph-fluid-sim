@@ -1,7 +1,7 @@
 #pragma once
 #include "raylib.h"
 
-#define MAX_PARTICLES 3000
+#define MAX_PARTICLES 1000
 
 #define HASH_TABLE_SIZE 8192
 #define CELL_SIZE H

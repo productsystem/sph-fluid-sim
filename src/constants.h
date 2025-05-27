@@ -12,6 +12,6 @@
 
 #define POLY6 4.f / (PI * pow(H, 8.f))
 #define VISC_LAP 40.f / (PI * pow(H, 5.f))
-#define SPIKY_GRAD -10.f / (PI * pow(H, 5.f))
+#define SPIKY_GRAD -5.f / (PI * pow(H, 5.f))
 #define EPS H
 #define DAMPING -0.5f 
