@@ -8,6 +8,9 @@ Since the SPH algorithm is expensive, spatial hashing is implemented to decrease
 ## Running
 Running is done with raylib quickstart template itself, the running details are given below:
 
+## Maintainer 
+- [Prajit](https://github.com/productsystem)
+
 # Raylib-Quickstart
 A simple cross platform template for setting up a project with the bleeding edge raylib code.
 Works with C or C++.
